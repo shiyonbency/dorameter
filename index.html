@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doraemon Quiet Meter - Classroom</title>
+    
+    <!-- Premium Doraemon Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='52' r='45' fill='%2300A0E9'/><circle cx='50' cy='58' r='35' fill='white'/><circle cx='42' cy='32' r='10' fill='white' stroke='%231c1c1e' stroke-width='2.5'/><circle cx='58' cy='32' r='10' fill='white' stroke='%231c1c1e' stroke-width='2.5'/><circle cx='44' cy='34' r='3.5' fill='%231c1c1e'/><circle cx='56' cy='34' r='3.5' fill='%231c1c1e'/><circle cx='50' cy='43' r='5' fill='%23E3001B'/><path d='M 35 62 Q 50 75 65 62' fill='none' stroke='%231c1c1e' stroke-width='3.5' stroke-linecap='round'/></svg>" type="image/svg+xml">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Switching to a fun, chunky, kid-friendly font -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Anime/Comic Color System */
+            --doraemon-blue: #00A0E9;
+            --doraemon-red: #E3001B;
+            --doraemon-yellow: #FFD900;
+            --doraemon-bg: #E8F8FF;
+            
+            --border-dark: #1C1C1E;
+            --shadow-color: #1C1C1E;
+            
+            /* Snappy fluid ease */
+            --fluid-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--doraemon-bg);
+            color: var(--border-dark);
+            overflow: hidden;
+            touch-action: none; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Fun Dot-Grid Background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-image: radial-gradient(var(--doraemon-blue) 2px, transparent 2px);
+            background-size: 30px 30px;
+            opacity: 0.15;
+            transition: all 0.5s ease;
+        }
+
+        /* Dynamic Action Background Layer */
+        .action-bg {
+            position: fixed;
+            inset: -50%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, white 0%, transparent 60%);
+            opacity: 0.8;
+            transition: background 0.5s ease, transform 10s linear;
+        }
+        .action-bg.warning { background: radial-gradient(circle at 50% 50%, rgba(255, 217, 0, 0.6) 0%, transparent 65%); }
+        .action-bg.loud { 
+            background: repeating-conic-gradient(from 0deg, rgba(227, 0, 27, 0.2) 0deg 15deg, transparent 15deg 30deg);
+            animation: spin 10s linear infinite;
+            opacity: 1;
+        }
+
+        .comic-panel {
+            background: white;
+            border: 4px solid var(--border-dark);
+            border-radius: 24px;
+            box-shadow: 8px 8px 0px 0px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+
+        .comic-btn {
+            background: white;
+            border: 4px solid var(--border-dark);
+            border-radius: 100px;
+            box-shadow: 4px 4px 0px 0px var(--shadow-color);
+            transition: transform 0.1s, box-shadow 0.1s, background-color 0.2s;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .comic-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px var(--shadow-color);
+        }
+        
+        .comic-btn-primary { background-color: var(--doraemon-blue); color: white; }
+        .comic-btn-primary:hover { background-color: #0088cc; }
+
+        .comic-btn-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        @keyframes float-bouncy {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes breathe-bouncy {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02) scaleY(0.98); }
+        }
+
+        @keyframes float-zzz {
+            0% { transform: translate(0, 0) scale(0.5) rotate(-10deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(40px, -80px) scale(1.5) rotate(15deg); opacity: 0; }
+        }
+
+        .anim-zzz { animation: float-zzz 3s ease-in-out infinite; }
+        .anim-zzz-delay-1 { animation-delay: 1s; }
+        .anim-zzz-delay-2 { animation-delay: 2s; }
+
+        .anim-float { animation: float-bouncy 4s ease-in-out infinite; }
+        .anim-breathe { animation: breathe-bouncy 2.5s ease-in-out infinite; transform-origin: bottom center; }
+        
+        .doraemon-part { transition: all 0.3s var(--fluid-ease); }
+        #doraemon-body { transition: fill 0.4s ease; }
+        
+        .meter-container {
+            background: #f0f0f0;
+            border: 4px solid var(--border-dark);
+            border-radius: 100px;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .meter-fill {
+            height: 100%;
+            background-color: var(--doraemon-blue);
+            border-right: 4px solid var(--border-dark);
+            transition: background-color 0.4s ease;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .meter-stripes {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(
+                45deg,
+                rgba(255,255,255,0.2) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255,255,255,0.2) 50%,
+                rgba(255,255,255,0.2) 75%,
+                transparent 75%,
+                transparent
+            );
+            background-size: 40px 40px;
+            animation: moveStripes 2s linear infinite;
+        }
+
+        @keyframes moveStripes { 0% { background-position: 0 0; } 100% { background-position: 40px 0; } }
+
+        .threshold-line {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 8px;
+            background-color: var(--doraemon-red);
+            border: 2px solid var(--border-dark);
+            border-radius: 8px;
+            transform: translateX(-50%);
+            z-index: 10;
+            transition: left 0.4s var(--fluid-ease);
+        }
+
+        .hidden-force { opacity: 0 !important; pointer-events: none !important; transform: scale(0.8) !important; position: absolute !important; }
+        .fade-enter { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important; position: relative !important; }
+
+        /* Typography Styling */
+        .text-stroke {
+            -webkit-text-stroke: 2px var(--border-dark);
+            color: white;
+            text-shadow: 4px 4px 0px var(--shadow-color);
+        }
+        
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 32px;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid var(--border-dark);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 2px 2px 0px 0px var(--border-dark);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:active { transform: scale(1.2); }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 12px;
+            cursor: pointer;
+            background: #e0e0e0;
+            border: 3px solid var(--border-dark);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-between relative">
+
+    <!-- Backgrounds -->
+    <div class="bg-grid" id="bg-grid"></div>
+    <div id="action-layer" class="action-bg"></div>
+
+    <div id="start-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-500">
+        <div class="comic-panel p-8 md:p-10 max-w-lg w-full text-center mx-4 transform transition-transform duration-500 hover:scale-[1.02]">
+            <h1 class="text-4xl md:text-5xl font-black mb-4 tracking-tight text-stroke" style="color: var(--doraemon-blue);">QUIET METER!</h1>
+            <p class="text-xl mb-8 font-semibold text-gray-700">Help Doraemon stay happy! If the class gets too noisy, he'll panic!</p>
+            
+            <div class="flex justify-center mb-8">
+                <svg width="120" height="120" viewBox="0 0 400 400" class="anim-float">
+                    <circle cx="200" cy="200" r="150" fill="#00A0E9" stroke="#1c1c1e" stroke-width="12" />
+                    <ellipse cx="200" cy="220" rx="120" ry="100" fill="white" stroke="#1c1c1e" stroke-width="12" />
+                    <path d="M 110 325 Q 200 355 290 325" fill="none" stroke="#E3001B" stroke-width="24" stroke-linecap="round" />
+                    <ellipse cx="170" cy="140" rx="30" ry="40" fill="white" stroke="#1c1c1e" stroke-width="10" />
+                    <ellipse cx="230" cy="140" rx="30" ry="40" fill="white" stroke="#1c1c1e" stroke-width="10" />
+                    <path d="M 155 142 Q 170 126 185 142" fill="none" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                    <path d="M 215 142 Q 230 126 245 142" fill="none" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                    <circle cx="200" cy="175" r="16" fill="#E3001B" stroke="#1c1c1e" stroke-width="10" />
+                    <line x1="200" y1="191" x2="200" y2="245" stroke="#1c1c1e" stroke-width="10" />
+                    <path d="M 135 240 Q 200 300 265 240" fill="none" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                    <circle cx="200" cy="345" r="22" fill="#FFD900" stroke="#1c1c1e" stroke-width="10" />
+                </svg>
+            </div>
+            
+            <button id="btn-start" class="comic-btn comic-btn-primary w-full py-4 text-2xl tracking-wide uppercase">
+                Let's Go!
+            </button>
+            <p id="mic-error" class="text-[#E3001B] mt-4 text-sm hidden font-bold">Microphone access is required!</p>
+        </div>
+    </div>
+
+    <header class="w-full flex justify-between items-center p-4 md:p-6 z-20">
+        <div class="comic-panel px-4 py-2 flex items-center gap-3" style="border-radius: 16px; box-shadow: 4px 4px 0px 0px var(--shadow-color);">
+            <div class="w-8 h-8 rounded-full bg-[#00A0E9] border-2 border-black flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path></svg>
+            </div>
+            <h1 class="text-xl font-black uppercase tracking-wide hidden sm:block">DoraMeter</h1>
+        </div>
+        
+        <div class="flex gap-3">
+            <button id="btn-settings" class="comic-btn comic-btn-icon" aria-label="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button id="btn-fullscreen" class="comic-btn comic-btn-icon" aria-label="Fullscreen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col items-center justify-center w-full relative z-10 px-4 mt-[-2vh]">
+        
+        <div class="h-24 mb-2 flex items-center justify-center w-full text-center relative z-20">
+            <div id="status-text" class="text-5xl md:text-7xl font-black uppercase tracking-wider text-stroke absolute transition-transform duration-300" style="color: var(--doraemon-blue);">
+                Quiet!
+            </div>
+        </div>
+
+        <div id="doraemon-container" class="anim-float w-full max-w-[320px] md:max-w-[400px] lg:max-w-[440px] relative">
+            
+            <!-- Classic Comic Zzz -->
+            <div id="zzz-particles" class="absolute top-0 right-8 md:right-12 z-20 transition-opacity duration-500 opacity-0">
+                <span class="anim-zzz absolute text-5xl font-black text-stroke" style="color: white; top: 0px; right: 0px;">Z</span>
+                <span class="anim-zzz anim-zzz-delay-1 absolute text-6xl font-black text-stroke" style="color: white; top: -30px; right: -30px;">Z</span>
+                <span class="anim-zzz anim-zzz-delay-2 absolute text-4xl font-black text-stroke" style="color: white; top: -70px; right: -10px;">z</span>
+            </div>
+
+            <div class="anim-breathe w-full h-full relative" id="doraemon-wrapper">
+                <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" class="w-full h-full overflow-visible drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]">
+                    
+                    <!-- Head Background -->
+                    <circle id="doraemon-body" cx="200" cy="200" r="150" fill="#00A0E9" stroke="#1c1c1e" stroke-width="12" />
+                    
+                    <!-- White Face -->
+                    <ellipse cx="200" cy="220" rx="122" ry="102" fill="white" stroke="#1c1c1e" stroke-width="12" />
+
+                    <!-- Red Collar -->
+                    <path d="M 112 325 Q 200 360 288 325" fill="none" stroke="#E3001B" stroke-width="28" stroke-linecap="round" />
+
+                    <!-- Bell -->
+                    <circle cx="200" cy="350" r="24" fill="#FFD900" stroke="#1c1c1e" stroke-width="10" />
+                    <line x1="180" y1="344" x2="220" y2="344" stroke="#1c1c1e" stroke-width="8" stroke-linecap="round"/>
+                    <circle cx="200" cy="356" r="6" fill="#1c1c1e" />
+                    <line x1="200" y1="356" x2="200" y2="374" stroke="#1c1c1e" stroke-width="8" stroke-linecap="round" />
+
+                    <!-- Eyes Base -->
+                    <ellipse cx="170" cy="140" rx="30" ry="40" fill="white" stroke="#1c1c1e" stroke-width="10" />
+                    <ellipse cx="230" cy="140" rx="30" ry="40" fill="white" stroke="#1c1c1e" stroke-width="10" />
+
+                    <!-- EXPRESSIONS -->
+                    <g id="eyes-group">
+                        <!-- Quiet -->
+                        <g id="eyes-quiet" class="doraemon-part fade-enter">
+                            <path d="M 152 142 Q 170 124 188 142" fill="none" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                            <path d="M 212 142 Q 230 124 248 142" fill="none" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                        </g>
+
+                        <!-- Warning -->
+                        <g id="eyes-warning" class="doraemon-part hidden-force">
+                            <circle cx="178" cy="145" r="6" fill="#1c1c1e" />
+                            <circle cx="222" cy="145" r="6" fill="#1c1c1e" />
+                            <!-- Anime Sweat Drop! -->
+                            <path d="M 280 80 Q 300 110 300 130 A 20 20 0 1 1 260 130 Q 260 110 280 80 Z" fill="#80D8FF" stroke="#1c1c1e" stroke-width="6" />
+                        </g>
+
+                        <!-- Loud (Panic) -->
+                        <g id="eyes-loud" class="doraemon-part hidden-force">
+                            <!-- X Eyes -->
+                            <path d="M 160 130 L 180 150 M 180 130 L 160 150" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                            <path d="M 220 130 L 240 150 M 240 130 L 220 150" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round" />
+                            <!-- Angry/Panic Eyebrows -->
+                            <path d="M 140 100 L 180 120" stroke="#1c1c1e" stroke-width="12" stroke-linecap="round" />
+                            <path d="M 260 100 L 220 120" stroke="#1c1c1e" stroke-width="12" stroke-linecap="round" />
+                        </g>
+                    </g>
+
+                    <!-- Red Nose -->
+                    <circle cx="200" cy="175" r="18" fill="#E3001B" stroke="#1c1c1e" stroke-width="10" />
+                    <circle cx="192" cy="167" r="6" fill="white" />
+                    <line x1="200" y1="193" x2="200" y2="245" stroke="#1c1c1e" stroke-width="10" stroke-linecap="round"/>
+
+                    <!-- Whiskers -->
+                    <g stroke="#1c1c1e" stroke-width="10" stroke-linecap="round">
+                        <line x1="120" y1="210" x2="50" y2="190" />
+                        <line x1="120" y1="230" x2="45" y2="230" />
+                        <line x1="120" y1="250" x2="50" y2="270" />
+                        
+                        <line x1="280" y1="210" x2="350" y2="190" />
+                        <line x1="280" y1="230" x2="355" y2="230" />
+                        <line x1="280" y1="250" x2="350" y2="270" />
+                    </g>
+
+                    <!-- MOUTH -->
+                    <g id="mouth-group">
+                        <!-- Quiet -->
+                        <g id="mouth-quiet" class="doraemon-part fade-enter">
+                            <path d="M 130 240 Q 200 320 270 240 Z" fill="#E3001B" stroke="#1c1c1e" stroke-width="10" stroke-linejoin="round"/>
+                            <!-- Tongue -->
+                            <path d="M 160 286 Q 200 260 240 286 Q 200 320 160 286" fill="#FF8A8A" />
+                        </g>
+
+                        <!-- Warning -->
+                        <g id="mouth-warning" class="doraemon-part hidden-force">
+                            <!-- Wavy nervous mouth -->
+                            <path d="M 150 250 Q 175 230 200 250 T 250 250" fill="none" stroke="#1c1c1e" stroke-width="12" stroke-linecap="round" />
+                        </g>
+
+                        <!-- Loud -->
+                        <g id="mouth-loud" class="doraemon-part hidden-force">
+                            <!-- Giant Scream -->
+                            <ellipse cx="200" cy="275" rx="55" ry="45" fill="#1c1c1e" />
+                            <ellipse cx="200" cy="290" rx="35" ry="25" fill="#FF8A8A" />
+                        </g>
+                    </g>
+
+                    <!-- Anime Snore Bubble -->
+                    <circle id="sleep-bubble" cx="225" cy="180" r="22" fill="rgba(255, 255, 255, 0.8)" stroke="#1c1c1e" stroke-width="6" style="transform-origin: 225px 180px; transition: opacity 0.5s ease; opacity: 0; transform: scale(0);" />
+                </svg>
+            </div>
+        </div>
+    </main>
+
+    <div class="w-full max-w-4xl px-4 md:px-8 z-20 mb-8">
+        <div class="comic-panel p-6">
+            <div class="flex justify-between items-end mb-3 px-2 font-black uppercase tracking-wide text-sm md:text-base">
+                <span class="text-[#00A0E9]">Quiet Zone</span>
+                <span class="text-[#E3001B]">Danger Zone!</span>
+            </div>
+            
+            <div class="meter-container h-14 w-full">
+                <div id="volume-bar" class="meter-fill" style="width: 0%;">
+                    <div class="meter-stripes"></div>
+                </div>
+                <div id="threshold-marker" class="threshold-line" style="left: 75%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full text-center pb-6 z-20 flex justify-center">
+        <div class="comic-panel px-6 py-2 flex items-center justify-center gap-2 font-bold text-sm" style="border-radius: 100px; box-shadow: 4px 4px 0px 0px var(--shadow-color);">
+            Made with 
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#E3001B]" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+            </svg>
+            by Shiyon Bency Philip.  All rights reserved.
+        </div>
+    </footer>
+
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="comic-panel p-8 max-w-md w-full mx-4 relative transform scale-95 transition-transform duration-300" id="settings-panel">
+            
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-black uppercase text-stroke" style="color: var(--doraemon-blue);">Settings</h2>
+                <button id="btn-close-settings" class="comic-btn comic-btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-8">
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-bold text-lg">Mic Power</label>
+                        <span id="sensitivity-val" class="font-black text-white bg-black px-3 py-1 rounded-full border-2 border-black">x1.5</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-600 mb-2">Adjust if the meter moves too slowly.</p>
+                    <input type="range" id="sensitivity-slider" min="0.5" max="3" step="0.1" value="1.5">
+                </div>
+
+                <hr class="border-2 border-black/10 rounded">
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-bold text-lg">Loud Limit</label>
+                        <span id="threshold-val" class="font-black text-white bg-[#E3001B] px-3 py-1 rounded-full border-2 border-black">75%</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-600 mb-2">Move left to require more silence.</p>
+                    <input type="range" id="threshold-slider" min="30" max="95" step="1" value="75">
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        let audioContext, analyser, microphone;
+        let isRunning = false;
+        
+        let currentVisualVolume = 0;
+        let targetVolume = 0;
+        
+        let config = { sensitivity: 1.5, threshold: 75, warningThreshold: 45 };
+        let currentState = 'quiet';
+
+        // DOM Caching
+        const startScreen = document.getElementById('start-screen');
+        const btnStart = document.getElementById('btn-start');
+        const micError = document.getElementById('mic-error');
+        
+        const volumeBar = document.getElementById('volume-bar');
+        const thresholdMarker = document.getElementById('threshold-marker');
+        const statusText = document.getElementById('status-text');
+        const actionLayer = document.getElementById('action-layer');
+        const bgGrid = document.getElementById('bg-grid');
+        
+        const doraemonWrapper = document.getElementById('doraemon-wrapper');
+        const doraemonBody = document.getElementById('doraemon-body');
+        const zzzParticles = document.getElementById('zzz-particles');
+        const sleepBubble = document.getElementById('sleep-bubble');
+        
+        const parts = {
+            quiet: { eyes: document.getElementById('eyes-quiet'), mouth: document.getElementById('mouth-quiet') },
+            warning: { eyes: document.getElementById('eyes-warning'), mouth: document.getElementById('mouth-warning') },
+            loud: { eyes: document.getElementById('eyes-loud'), mouth: document.getElementById('mouth-loud') }
+        };
+
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsPanel = document.getElementById('settings-panel');
+        const btnSettings = document.getElementById('btn-settings');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const sensitivitySlider = document.getElementById('sensitivity-slider');
+        const sensitivityVal = document.getElementById('sensitivity-val');
+        const thresholdSlider = document.getElementById('threshold-slider');
+        const thresholdVal = document.getElementById('threshold-val');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+
+        btnStart.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+
+                analyser.fftSize = 512;
+                analyser.smoothingTimeConstant = 0.45;
+                microphone.connect(analyser);
+
+                startScreen.style.opacity = '0';
+                startScreen.querySelector('.comic-panel').style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    startScreen.classList.add('hidden-force');
+                    isRunning = true;
+                    requestAnimationFrame(audioLoop);
+                }, 500);
+
+            } catch (err) {
+                console.error("Audio device access failed:", err);
+                micError.classList.remove('hidden');
+            }
+        });
+
+        function audioLoop() {
+            if (!isRunning) return;
+
+            const bufferLength = analyser.fftSize;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteTimeDomainData(dataArray);
+
+            let sumSquares = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const normalized = (dataArray[i] / 128.0) - 1.0;
+                sumSquares += normalized * normalized;
+            }
+            const rms = Math.sqrt(sumSquares / bufferLength);
+
+            let rawVolumePct = (rms * 220) * config.sensitivity;
+            targetVolume = Math.min(Math.max(rawVolumePct, 0), 100);
+
+            // Snappy linear interpolation for comic feel
+            currentVisualVolume += (targetVolume - currentVisualVolume) * 0.25;
+
+            processTick(currentVisualVolume);
+            requestAnimationFrame(audioLoop);
+        }
+
+        function processTick(vol) {
+            volumeBar.style.width = `${vol}%`;
+
+            let newState = 'quiet';
+            if (vol >= config.threshold) {
+                newState = 'loud';
+            } else if (vol >= config.warningThreshold) {
+                newState = 'warning';
+            }
+
+            if (newState !== currentState) {
+                transitionToState(newState);
+                currentState = newState;
+            }
+
+            handleContinuousFeatures(vol);
+        }
+
+        function transitionToState(state) {
+            Object.values(parts).forEach(s => {
+                s.eyes.classList.remove('fade-enter');
+                s.eyes.classList.add('hidden-force');
+                s.mouth.classList.remove('fade-enter');
+                s.mouth.classList.add('hidden-force');
+            });
+
+            const active = parts[state];
+            active.eyes.classList.remove('hidden-force');
+            void active.eyes.offsetWidth;
+            active.eyes.classList.add('fade-enter');
+            
+            active.mouth.classList.remove('hidden-force');
+            void active.mouth.offsetWidth;
+            active.mouth.classList.add('fade-enter');
+
+            // Reset backgrounds
+            actionLayer.className = 'action-bg';
+            doraemonWrapper.classList.remove('anim-breathe');
+            
+            // Pop text effect
+            statusText.style.transform = 'scale(1.2)';
+            setTimeout(() => statusText.style.transform = 'scale(1)', 150);
+
+            if (state === 'quiet') {
+                doraemonBody.setAttribute('fill', '#00A0E9');
+                volumeBar.style.backgroundColor = '#00A0E9';
+                statusText.textContent = "Quiet!";
+                statusText.style.color = '#00A0E9';
+                doraemonWrapper.classList.add('anim-breathe');
+                bgGrid.style.opacity = '0.15';
+                
+            } else if (state === 'warning') {
+                doraemonBody.setAttribute('fill', '#FFD900'); 
+                volumeBar.style.backgroundColor = '#FFD900';
+                statusText.textContent = "Careful!";
+                statusText.style.color = '#FFD900';
+                actionLayer.classList.add('warning');
+                bgGrid.style.opacity = '0';
+
+            } else if (state === 'loud') {
+                doraemonBody.setAttribute('fill', '#E3001B'); 
+                volumeBar.style.backgroundColor = '#E3001B';
+                statusText.textContent = "TOO LOUD!";
+                statusText.style.color = '#E3001B';
+                actionLayer.classList.add('loud');
+                bgGrid.style.opacity = '0';
+            }
+        }
+
+        function handleContinuousFeatures(vol) {
+            if (currentState === 'loud') {
+                // Chaotic shaking
+                doraemonWrapper.style.transform = `translate(${(Math.random() - 0.5) * 16}px, ${(Math.random() - 0.5) * 16}px)`;
+            } else {
+                doraemonWrapper.style.transform = ''; 
+            }
+
+            // Sleep feature
+            if (currentState === 'quiet' && vol < 8) {
+                zzzParticles.classList.remove('opacity-0');
+                sleepBubble.style.opacity = '1';
+                const breathingFactor = 1.0 + Math.sin(Date.now() / 400) * 0.5;
+                sleepBubble.style.transform = `scale(${breathingFactor})`;
+            } else {
+                zzzParticles.classList.add('opacity-0');
+                sleepBubble.style.opacity = '0';
+                sleepBubble.style.transform = 'scale(0)';
+            }
+        }
+
+        function openSettings() {
+            settingsModal.classList.remove('opacity-0', 'pointer-events-none');
+            settingsPanel.classList.remove('scale-95');
+        }
+
+        function closeSettings() {
+            settingsModal.classList.add('opacity-0', 'pointer-events-none');
+            settingsPanel.classList.add('scale-95');
+        }
+
+        btnSettings.addEventListener('click', openSettings);
+        btnCloseSettings.addEventListener('click', closeSettings);
+        settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
+
+        thresholdMarker.style.left = `${config.threshold}%`;
+
+        sensitivitySlider.addEventListener('input', (e) => {
+            config.sensitivity = parseFloat(e.target.value);
+            sensitivityVal.textContent = `x${config.sensitivity.toFixed(1)}`;
+        });
+
+        thresholdSlider.addEventListener('input', (e) => {
+            config.threshold = parseInt(e.target.value);
+            thresholdVal.textContent = `${config.threshold}%`;
+            config.warningThreshold = Math.max(10, config.threshold - 30);
+            thresholdMarker.style.left = `${config.threshold}%`;
+        });
+
+        btnFullscreen.addEventListener('click', () => {
+            const doc = window.document;
+            const docEl = doc.documentElement;
+            const requestFullScreen = docEl.requestFullscreen || docEl.webkitRequestFullScreen;
+            const cancelFullScreen = doc.exitFullscreen || doc.webkitExitFullscreen;
+
+            if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+                if(requestFullScreen) requestFullScreen.call(docEl);
+            } else {
+                if(cancelFullScreen) cancelFullScreen.call(doc);
+            }
+        });
+    </script>
+</body>
+</html>
